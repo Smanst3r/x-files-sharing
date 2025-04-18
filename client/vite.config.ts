@@ -5,6 +5,10 @@ import { resolve } from "path";
 // https://vite.dev/config/
 export default defineConfig({
     plugins: [react()],
+    build: {
+        outDir: '../server/public/dist',
+        assetsDir: 'assets',
+    },
     resolve: {
         alias: {
             "@": resolve(__dirname, "./src"),

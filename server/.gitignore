@@ -3,6 +3,10 @@
 /node_modules
 /build
 
+allowed_ip_addresses.txt
+tokens.txt
+.env.docker
+
 # Logs
 logs
 *.log

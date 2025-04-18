@@ -14,9 +14,16 @@ async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     const FileStore = fileStoreFactory(session);
     const config = app.get(ConfigService);
+    const isProduction = process.env.NODE_ENV === 'production';
 
-    app.useStaticAssets(join(__dirname, '..', '..', 'client', 'dist'));
-    app.setBaseViewsDir(join(__dirname, '..', '..', 'client', 'dist'));
+    if (isProduction) {
+        const staticPath = join(__dirname, 'public');
+        app.useStaticAssets(staticPath);
+        app.setBaseViewsDir(staticPath);
+    } else {
+        app.useStaticAssets(join(__dirname, '..', '..', 'client', 'dist'));
+        app.setBaseViewsDir(join(__dirname, '..', '..', 'client', 'dist'));
+    }
 
     app.use(cookieParser());
 
@@ -54,7 +61,8 @@ async function bootstrap() {
             saveUninitialized: false,
             cookie: {
                 maxAge: sessionLifetime * 1000,
-                secure: process.env.NODE_ENV === 'production',
+                // secure: process.env.NODE_ENV === 'production',
+                secure: false, // site currently is on http only
                 httpOnly: true,
             },
         }),

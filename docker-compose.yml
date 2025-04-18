@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+    files-sharing-app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - "3333:3333"
+        volumes:
+            - uploads-data:/app/server/uploads
+            - sessions-data:/app/server/sessions
+            - ./server/app.db:/app/server/app.db
+            - ./server/allowed_ip_addresses.txt:/app/server/allowed_ip_addresses.txt
+            - ./server/tokens.txt:/app/server/tokens.txt
+        env_file:
+            - server/.env.docker
+
+volumes:
+    uploads-data:
+    sessions-data:
