@@ -10,6 +10,7 @@ import { extname, join } from 'path';
 import { Request } from 'express';
 import * as fs from "fs";
 import { AppService } from "./app.service";
+import * as path from "path";
 
 type TResponseFile = {
     id: number
@@ -44,8 +45,11 @@ export class UploadController {
                         cb(null, userDirectory);
                     },
                     filename: (req, file, cb) => {
-                        const baseName = file.originalname.replace(extname(file.originalname), '');
-                        const extension = extname(file.originalname);
+                        let originalFilename = Buffer.from(file.originalname, 'latin1').toString('utf8'); // This fix issue with cyrillic file names
+                        originalFilename = path.basename(originalFilename);
+                        let baseName = originalFilename.replace(extname(originalFilename), '');
+
+                        const extension = extname(originalFilename);
                         const fileName = `${baseName}${extension}`;
                         cb(null, fileName);
                     },
