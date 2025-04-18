@@ -1,5 +1,6 @@
 import {
     Controller,
+    InternalServerErrorException,
     Post, Req,
     UploadedFiles,
     UseInterceptors,
@@ -59,6 +60,11 @@ export class UploadController {
     )
     async uploadFile(@UploadedFiles() files: { file?: Express.Multer.File[] }, @Req() req: Request) {
         const sessionId = req.sessionID;
+        const uploadDir = req.session.user?.uploadDir;
+        if (!uploadDir) {
+            throw new InternalServerErrorException('Not found upload dir for user session');
+        }
+
         const response: { statusCode: number, files: TResponseFile[] } = {
             statusCode: 200,
             files: [],
@@ -66,7 +72,7 @@ export class UploadController {
 
         if (files?.file) {
             for (const file of files.file) {
-                const fileEntity = await this.appService.saveFile(file.filename, sessionId);
+                const fileEntity = await this.appService.saveFile(file.filename, sessionId, uploadDir);
 
                 response.files.push({
                     id: fileEntity.id,

@@ -13,7 +13,7 @@ export class UploadedFileRepository {
         private config: ConfigService
     ) {}
 
-    async saveFileInDb(fileName: string, sessionId: string): Promise<UploadedFileEntity> {
+    async saveFileInDb(fileName: string, sessionId: string, uploadDir: string): Promise<UploadedFileEntity> {
         const token = nanoid(12);
         const tokenLifetimeDays = parseInt(this.config.get('DOWNLOAD_TOKEN_LIFETIME_DAYS', '1'));
 
@@ -34,6 +34,7 @@ export class UploadedFileRepository {
             sessionId,
             token,
             fileName,
+            dirName: uploadDir,
             expiresAt,
         });
         await this.repo.save(file);

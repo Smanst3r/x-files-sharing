@@ -16,5 +16,8 @@ export class UploadedFileEntity {
     fileName: string;
 
     @Column()
+    dirName: string;
+
+    @Column()
     expiresAt: Date;
 }

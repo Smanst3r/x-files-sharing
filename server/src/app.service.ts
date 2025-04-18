@@ -50,8 +50,8 @@ export class AppService {
         fs.writeFileSync(path.resolve(tokensFilePath), accessTokens.join('\n'));
     }
 
-    async saveFile(fileName: string, sessionId: string): Promise<UploadedFileEntity> {
-        return this.uploadedFileRepository.saveFileInDb(fileName, sessionId);
+    async saveFile(fileName: string, sessionId: string, uploadDir: string): Promise<UploadedFileEntity> {
+        return this.uploadedFileRepository.saveFileInDb(fileName, sessionId, uploadDir);
     }
 
     async getUserFiles(sessionId: string, uploadDir: string) {

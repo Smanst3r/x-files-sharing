@@ -66,8 +66,7 @@ export class AppController {
             throw new NotFoundException('Download link has expired');
         }
 
-        const uploadDir = req.session.user?.uploadDir;
-        return res.sendFile(fileData.fileName, { root: './uploads/'+uploadDir });
+        return res.sendFile(fileData.fileName, { root: './uploads/'+fileData.dirName });
     }
 
     @Get('download/:fileId')
@@ -85,8 +84,7 @@ export class AppController {
             return res.status(404).send();
         }
 
-        const uploadDir = req.session.user?.uploadDir;
         res.setHeader('Content-Disposition', `attachment; filename="${fileData.fileName}"`);
-        return res.sendFile(fileData.fileName, { root: './uploads/'+uploadDir });
+        return res.sendFile(fileData.fileName, { root: './uploads/'+fileData.dirName });
     }
 }
