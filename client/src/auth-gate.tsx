@@ -4,11 +4,12 @@ import { AxiosError } from "axios";
 import useCommonStyles from "@/styles.tsx";
 
 export function AuthGate({ children }: { children: ReactNode }) {
-    const [checking, setChecking] = useState(true);
+    const [isInitialCheckup, setIsInitialCheckup] = useState(true);
     const [authenticated, setAuthenticated] = useState(false);
     const [token, setToken] = useState('');
     const [error, setError] = useState('');
     const [errorStatus, setErrorStatus] = useState<number|undefined>(undefined);
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const commonClasses = useCommonStyles();
 
     useEffect(() => {
@@ -19,7 +20,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
             setErrorStatus(reason.status);
             setError((reason.response?.data as string) || reason.message);
         }).finally(() => {
-            setChecking(false);
+            setIsInitialCheckup(false);
         });
     }, []);
 
@@ -27,6 +28,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         event.preventDefault();
         setErrorStatus(undefined);
         setError('');
+        setIsSubmitting(true);
         api.post('/auth', {
             token: token,
         }).then(() => {
@@ -35,10 +37,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
         }).catch((reason: AxiosError) => {
             setError((reason.response?.data as string) || reason.message);
             setErrorStatus(reason.status);
-        });
+        }).finally(() => { setIsSubmitting(false) });
     };
 
-    if (checking) {
+    if (isInitialCheckup) {
         return <h1 style={{ textAlign: 'center' }}>Checking auth...</h1>;
     }
 
@@ -51,7 +53,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
             </div>
         }
 
-        if (errorStatus !== 401) {
+        if (errorStatus && errorStatus !== 401) {
             return <div style={{ textAlign: 'center' }}>
                 <h1 className={commonClasses.textDanger}>Unknown server error</h1>
                 <p>{error}</p>
@@ -67,10 +69,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
                     required
+                    disabled={isSubmitting}
                     placeholder="Token"
                     style={{ width: '100%', padding: '10px', marginBottom: '1rem' }}
                 />
-                <button type="submit" style={{ padding: '10px 20px' }}>Submit</button>
+                <button type="submit" disabled={isSubmitting} style={{ padding: '10px 20px' }}>Submit</button>
             </form>
         );
     }
