@@ -1,13 +1,14 @@
 #!/bin/sh
 
-cd /app/server
+DB_PATH="/app/server/db-data/app.db"
 
-# If database file is missing, create it from SQL
-if [ ! -f ./app.db ]; then
+# If the database file is missing, initialize it from the SQL file
+if [ ! -f "$DB_PATH" ]; then
   echo "Initializing SQLite DB from app.db.sql..."
-  sqlite3 app.db < app.db.sql
+  sqlite3 "$DB_PATH" < /app/server/app.db.sql
 else
-  echo "SQLite DB already exists. Skipping init."
+  echo "SQLite DB already exists at $DB_PATH. Skipping init."
 fi
 
+# Run the app (the original command passed to CMD)
 exec "$@"

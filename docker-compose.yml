@@ -5,17 +5,18 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
+        image: dreamsoft/simple-file-share:latest
+        container_name: file-share-container
         ports:
             - "3333:3333"
         volumes:
             - uploads-data:/app/server/uploads
             - sessions-data:/app/server/sessions
-            - ./server/app.db:/app/server/app.db
-            - ./server/allowed_ip_addresses.txt:/app/server/allowed_ip_addresses.txt
-            - ./server/tokens.txt:/app/server/tokens.txt
+            - db-data:/app/server/db-data
         env_file:
             - server/.env.docker
 
 volumes:
     uploads-data:
     sessions-data:
+    db-data:

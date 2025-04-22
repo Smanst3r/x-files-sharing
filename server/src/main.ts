@@ -14,8 +14,8 @@ import { Logger, RequestMethod } from "@nestjs/common";
 const rootPath = resolve(join(__dirname, '..'));
 export const paths = {
     root: rootPath,
-    allowedIpsFile: resolve(join(rootPath, 'allowed_ip_addresses.txt')),
-    tokensFile: resolve(rootPath, 'tokens.txt'),
+    allowedIpsFile: resolve(join(rootPath, 'db-data', 'allowed_ip_addresses.txt')),
+    tokensFile: resolve(rootPath, 'db-data', 'tokens.txt'),
     uploads: resolve(rootPath, 'uploads'),
 }
 

@@ -10,13 +10,14 @@ import { AuthController } from "./auth/auth.controller";
 import { CleanupModule } from "./cleanup/cleanup.module";
 import { AuthInvalidAttemptEntity } from "./auth/auth-invalid-attempt.entity";
 import { AuthTooManyAttemptsMiddleware } from "./auth/auth-too-many-attempts.middleware";
+import { join, resolve } from "path";
 
 @Module({
     imports: [
         ConfigModule.forRoot({isGlobal: true}),
         TypeOrmModule.forRoot({
             type: 'sqlite',
-            database: 'app.db',
+            database: resolve(join(__dirname, '..', 'db-data', 'app.db')),
             entities: [UploadedFileEntity, AuthInvalidAttemptEntity],
             synchronize: false,
         }),

@@ -3,9 +3,8 @@
 /node_modules
 /build
 
-allowed_ip_addresses.txt
-tokens.txt
 .env.docker
+public
 
 # Logs
 logs
@@ -15,10 +14,6 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-
-sessions
-uploads
-app.db
 
 # OS
 .DS_Store

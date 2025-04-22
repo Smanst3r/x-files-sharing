@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS "uploaded_files";
 CREATE TABLE IF NOT EXISTS "uploaded_files"
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -8,8 +7,6 @@ CREATE TABLE IF NOT EXISTS "uploaded_files"
     expiresAt TEXT not null,
     sessionId TEXT not null
 );
-
-DROP TABLE IF EXISTS "auth_token_invalid_attempts";
 CREATE TABLE IF NOT EXISTS "auth_token_invalid_attempts"
 (
     ip TEXT not null PRIMARY KEY,
