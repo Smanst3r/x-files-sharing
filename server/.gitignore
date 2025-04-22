@@ -6,7 +6,6 @@
 allowed_ip_addresses.txt
 tokens.txt
 .env.docker
-public/
 
 # Logs
 logs
