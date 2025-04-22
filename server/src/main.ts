@@ -8,22 +8,41 @@ import { ConfigService } from "@nestjs/config";
 import { join, resolve } from "path";
 import * as fs from "fs";
 import { AuthGuard } from "./auth/auth.guard";
-import { RequestMethod } from "@nestjs/common";
+import { Logger, RequestMethod } from "@nestjs/common";
+
+// Setup application root paths
+const rootPath = resolve(join(__dirname, '..'));
+export const paths = {
+    root: rootPath,
+    allowedIpsFile: resolve(join(rootPath, 'allowed_ip_addresses.txt')),
+    tokensFile: resolve(rootPath, 'tokens.txt'),
+    uploads: resolve(rootPath, 'uploads'),
+}
+
+export const AUTH_TOKEN_MAX_INVALID_ATTEMPTS = 5;
+export const AUTH_TOKEN_MAX_INVALID_ATTEMPTS_HOURS = 1; // per hour
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     const FileStore = fileStoreFactory(session);
     const config = app.get(ConfigService);
-    const isProduction = process.env.NODE_ENV === 'production';
+    const logger = new Logger('Bootstrap');
 
-    if (isProduction) {
-        const staticPath = join(__dirname, 'public');
-        app.useStaticAssets(staticPath);
-        app.setBaseViewsDir(staticPath);
-    } else {
-        app.useStaticAssets(join(__dirname, '..', '..', 'client', 'dist'));
-        app.setBaseViewsDir(join(__dirname, '..', '..', 'client', 'dist'));
+    if (!config.get('INIT_ALLOWED_IP')) {
+        logger.error('Please set required INIT_ALLOWED_IP environment variable. Application closed');
+        return await app.close();
     }
+    if (!config.get('INIT_AUTH_TOKEN')) {
+        logger.error('Please set required INIT_AUTH_TOKEN environment variable. Application closed');
+        return await app.close();
+    }
+
+    const staticPath = resolve(join(rootPath, 'public'));
+    if (!fs.existsSync(staticPath)) {
+        fs.mkdirSync(staticPath);
+    }
+    app.useStaticAssets(staticPath);
+    app.setBaseViewsDir(staticPath);
 
     app.use(cookieParser());
 
@@ -39,14 +58,14 @@ async function bootstrap() {
         credentials: true,
     });
 
-
     const sessionLifetime = parseInt(config.get('SESSION_LIFETIME_DAYS', '7'), 10) * 24 * 60 * 60;
-    const sessionSecret = config.get('SESSION_SECRET');
+    let sessionSecret = config.get('SESSION_SECRET');
     if (!sessionSecret) {
-        throw new Error('Mandatory SESSION_SECRET is missing in .env');
+        sessionSecret = 'dummy_session_secret!';
+        logger.warn('Please set the SESSION_SECRET environment variable to better protect your session data');
     }
 
-    const sessionDir = resolve(__dirname, '..', 'sessions');
+    const sessionDir = resolve(join(rootPath, 'sessions'));
     if (!fs.existsSync(sessionDir)) {
         fs.mkdirSync(sessionDir);
     }
@@ -68,8 +87,27 @@ async function bootstrap() {
         }),
     );
 
-    if (!fs.existsSync('uploads')) {
-        fs.mkdirSync('uploads');
+    const uploadsDir = paths.uploads;
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir);
+    }
+
+    const tokensFilePath = paths.tokensFile;
+    if (!fs.existsSync(tokensFilePath)) {
+        try {
+            fs.writeFileSync(tokensFilePath, '');
+        } catch (err) {
+            logger.error(err);
+        }
+    }
+
+    const allowedIpsFilePath = paths.allowedIpsFile;
+    if (!fs.existsSync(allowedIpsFilePath)) {
+        try {
+            fs.writeFileSync(allowedIpsFilePath, '');
+        } catch (err) {
+            logger.error(err);
+        }
     }
 
     await app.listen(3333);

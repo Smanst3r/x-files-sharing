@@ -7,19 +7,23 @@ import { UploadedFileEntity } from "./uploaded-file.entity";
 import { UploadedFileRepository } from "./uploaded-file.repository";
 import { UploadController } from "./upload.controller";
 import { AuthController } from "./auth/auth.controller";
+import { CleanupModule } from "./cleanup/cleanup.module";
+import { AuthInvalidAttemptEntity } from "./auth/auth-invalid-attempt.entity";
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot({
-      type: 'sqlite',
-      database: 'app.db',
-      entities: [UploadedFileEntity],
-      synchronize: false,
-    }),
-    TypeOrmModule.forFeature([UploadedFileEntity]),
-  ],
-  controllers: [AppController, UploadController, AuthController],
-  providers: [AppService, UploadedFileRepository],
+    imports: [
+        ConfigModule.forRoot({isGlobal: true}),
+        TypeOrmModule.forRoot({
+            type: 'sqlite',
+            database: 'app.db',
+            entities: [UploadedFileEntity, AuthInvalidAttemptEntity],
+            synchronize: false,
+        }),
+        TypeOrmModule.forFeature([UploadedFileEntity, AuthInvalidAttemptEntity]),
+        CleanupModule,
+    ],
+    controllers: [AppController, UploadController, AuthController],
+    providers: [AppService, UploadedFileRepository],
 })
-export class AppModule {}
+export class AppModule {
+}

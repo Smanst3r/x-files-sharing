@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs';
-import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UploadedFileEntity } from "../uploaded-file.entity";
+import { join } from "path";
+import { paths } from "../main";
 
 @Injectable()
 export class CleanupService {
     private readonly logger = new Logger(CleanupService.name);
-    private readonly uploadsDir: string;
     private readonly fileLifetimeMs: number;
 
     constructor(
@@ -18,30 +18,30 @@ export class CleanupService {
         @InjectRepository(UploadedFileEntity)
         private readonly filesRepo: Repository<UploadedFileEntity>,
     ) {
-        this.uploadsDir = path.resolve(__dirname, '../../uploads');
         const days = parseInt(this.configService.get('UPLOADED_FILES_LIFETIME_DAYS', '7'), 10);
         this.fileLifetimeMs = days * 24 * 60 * 60 * 1000;
     }
 
     @Cron(CronExpression.EVERY_DAY_AT_2AM)
     async handleFileCleanup() {
+        const uploadsDir = paths.uploads;
         this.logger.log('Running file cleanup task...');
         const now = Date.now();
 
-        if (!fs.existsSync(this.uploadsDir)) {
+        if (!fs.existsSync(uploadsDir)) {
             return;
         }
 
-        const sessionDirs = fs.readdirSync(this.uploadsDir);
+        const sessionDirs = fs.readdirSync(uploadsDir);
         for (const sessionId of sessionDirs) {
-            const sessionPath = path.join(this.uploadsDir, sessionId);
+            const sessionPath = join(uploadsDir, sessionId);
             if (!fs.statSync(sessionPath).isDirectory()) {
                 continue;
             }
 
             const files = fs.readdirSync(sessionPath);
             for (const file of files) {
-                const filePath = path.join(sessionPath, file);
+                const filePath = join(sessionPath, file);
                 const stats = fs.statSync(filePath);
 
                 const expired = stats.mtime.getTime() + this.fileLifetimeMs < now;

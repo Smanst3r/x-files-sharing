@@ -2,6 +2,8 @@ import { Body, Controller, Get, NotFoundException, Param, Post, Req, Res } from 
 import { AppService } from './app.service';
 import { Request, Response } from 'express';
 import { ConfigService } from "@nestjs/config";
+import { join, resolve } from "path";
+import { paths } from "./main";
 
 @Controller()
 export class AppController {
@@ -66,7 +68,8 @@ export class AppController {
             throw new NotFoundException('Download link has expired');
         }
 
-        return res.sendFile(fileData.fileName, { root: './uploads/'+fileData.dirName });
+        res.setHeader('Content-Disposition', `filename="${encodeURIComponent(fileData.fileName)}"`);
+        return res.sendFile(fileData.fileName, { root: resolve(join(paths.uploads, fileData.dirName)) });
     }
 
     @Get('download/:fileId')
@@ -84,7 +87,7 @@ export class AppController {
             return res.status(404).send();
         }
 
-        res.setHeader('Content-Disposition', `attachment; filename="${fileData.fileName}"`);
-        return res.sendFile(fileData.fileName, { root: './uploads/'+fileData.dirName });
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileData.fileName)}"`);
+        return res.sendFile(fileData.fileName, { root: resolve(join(paths.uploads, fileData.dirName)) });
     }
 }

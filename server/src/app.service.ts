@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from "fs";
-import * as path from "path";
 import { UploadedFileRepository } from "./uploaded-file.repository";
 import { UploadedFileEntity } from "./uploaded-file.entity";
+import { join, resolve } from "path";
+import { paths } from "./main";
 
 @Injectable()
 export class AppService {
@@ -22,13 +23,15 @@ export class AppService {
     }
 
     getWebsiteSettings() {
-        const allowedIpsFilePath = this.config.get('ALLOWED_IPS_FILE_PATH', '');
-        const allowedIps: string[] = fs.readFileSync(path.resolve(allowedIpsFilePath), 'utf-8')
+        const allowedIpsFilePath = paths.allowedIpsFile
+        const tokensFilePath = paths.tokensFile;
+        if (!fs.existsSync(allowedIpsFilePath) || !fs.existsSync(tokensFilePath)) {
+            throw new Error(`Files does not exist: ${allowedIpsFilePath}`);
+        }
+        const allowedIps: string[] = fs.readFileSync(resolve(allowedIpsFilePath), 'utf-8')
             .split(/\r?\n/)
             .map((line: string) => line.trim())
             .filter(Boolean);
-
-        const tokensFilePath = this.config.get('TOKENS_FILE_PATH', '');
         const accessTokens: string[] = fs.readFileSync(tokensFilePath, 'utf-8')
             .split(/\r?\n/)
             .map((line: string) => line.trim())
@@ -41,13 +44,13 @@ export class AppService {
     }
 
     saveWebsiteSettings(ipAddressesRaw: string[], accessTokensRaw: string[]) {
-        const allowedIpsFilePath = this.config.get('ALLOWED_IPS_FILE_PATH', '');
-        const tokensFilePath = this.config.get('TOKENS_FILE_PATH', '');
+        const allowedIpsFilePath = paths.allowedIpsFile;
+        const tokensFilePath = paths.tokensFile;
         const ipAddresses = ipAddressesRaw.map(line => line.trim()).filter(Boolean);
         const accessTokens = accessTokensRaw.map(line => line.trim()).filter(Boolean);
 
-        fs.writeFileSync(path.resolve(allowedIpsFilePath), ipAddresses.join('\n'));
-        fs.writeFileSync(path.resolve(tokensFilePath), accessTokens.join('\n'));
+        fs.writeFileSync(resolve(allowedIpsFilePath), ipAddresses.join('\n'));
+        fs.writeFileSync(resolve(tokensFilePath), accessTokens.join('\n'));
     }
 
     async saveFile(fileName: string, sessionId: string, uploadDir: string): Promise<UploadedFileEntity> {
@@ -55,12 +58,12 @@ export class AppService {
     }
 
     async getUserFiles(sessionId: string, uploadDir: string) {
-        const dir = path.resolve(`uploads/${uploadDir}`);
+        const dir = resolve(join(paths.uploads, uploadDir));
         const uploadedFilesTtl = parseInt(this.config.get('UPLOADED_FILES_LIFETIME_DAYS', '0'));
 
         if (fs.existsSync(dir)) {
             const fsFiles = fs.readdirSync(dir).map((filename) => {
-                const filePath = path.join(dir, filename);
+                const filePath = join(dir, filename);
                 const stats = fs.statSync(filePath);
 
                 const fileStat: TFileStat = {
@@ -108,8 +111,9 @@ export class AppService {
 
     async removeFile(uploadDir: string, fileId: number) {
         const fileData = await this.uploadedFileRepository.findOneBy({ id: fileId });
+        const uploadPath = resolve(join(paths.uploads, uploadDir));
         if (fileData) {
-            const filePath = path.resolve(`uploads/${uploadDir}/${fileData.fileName}`);
+            const filePath = resolve(join(uploadPath, fileData.fileName));
             if (fs.existsSync(filePath)) {
                 fs.unlink(filePath, (err) => {
                     if (err) {

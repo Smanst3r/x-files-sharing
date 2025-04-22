@@ -7,11 +7,11 @@ import {
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname, join, resolve, basename } from 'path';
 import { Request } from 'express';
 import * as fs from "fs";
 import { AppService } from "./app.service";
-import * as path from "path";
+import { paths } from "./main";
 
 type TResponseFile = {
     id: number
@@ -36,18 +36,18 @@ export class UploadController {
             {
                 storage: diskStorage({
                     destination: (req, file, cb) => {
-                        const uploadDir = req.session.user?.uploadDir;
-                        if (!uploadDir) {
+                        const userUploadDir = req.session.user?.uploadDir;
+                        if (!userUploadDir) {
                             return cb(new Error('User session is missing upload dir'), '');
                         }
 
-                        const userDirectory = join('./uploads', uploadDir);
+                        const userDirectory = resolve(join(paths.uploads, userUploadDir));
                         fs.mkdirSync(userDirectory, { recursive: true });
                         cb(null, userDirectory);
                     },
                     filename: (req, file, cb) => {
                         let originalFilename = Buffer.from(file.originalname, 'latin1').toString('utf8'); // This fix issue with cyrillic file names
-                        originalFilename = path.basename(originalFilename);
+                        originalFilename = basename(originalFilename);
                         let baseName = originalFilename.replace(extname(originalFilename), '');
 
                         const extension = extname(originalFilename);

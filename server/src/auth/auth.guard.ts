@@ -1,16 +1,14 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
-import * as path from 'path';
-import { ConfigService } from '@nestjs/config';
 import * as fs from "fs";
+import { paths } from "../main";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-    private allowedIpsFilePath: string;
+    private readonly logger = new Logger(AuthGuard.name);
 
-    constructor(private config: ConfigService) {
-        this.allowedIpsFilePath = path.resolve(this.config.get('ALLOWED_IPS_FILE_PATH', ''));
-    }
+    constructor(private config: ConfigService) {}
 
     canActivate(context: ExecutionContext): boolean {
         const req = context.switchToHttp().getRequest<Request>();
@@ -27,23 +25,33 @@ export class AuthGuard implements CanActivate {
         }
 
         if (allowedIps.includes(ip)) {
+            if (!req.session.user) {
+                req.session.user = {
+                    authenticated: true,
+                    uploadDir: req.sessionID,
+                };
+            }
             return true;
+        } else {
+            this.logger.debug(`IP :: ${ip} is not whitelisted`);
         }
 
         res.status(401).send('Unauthorized');
         return false;
     }
 
-    private getAllowedIps() {
+    private getAllowedIps(): string[] {
+        let r: string[] = [];
         try {
-            const fileContents = fs.readFileSync(this.allowedIpsFilePath, 'utf-8');
-            return fileContents
+            const fileContents = fs.readFileSync(paths.allowedIpsFile, 'utf-8');
+            r = fileContents
                 .split(/\r?\n/)
                 .map((line: string) => line.trim())
                 .filter(Boolean);
         } catch (err) {
-            console.error('Failed to read allowed IPs:', err);
+            this.logger.error(err);
         }
-        return [];
+
+        return [...r, '127.0.0.1', this.config.get('INIT_ALLOWED_IP') as string];
     }
 }
