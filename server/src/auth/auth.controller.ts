@@ -30,9 +30,10 @@ export class AuthController {
         }
 
         const savedTokens = fs.readFileSync(paths.tokensFile, 'utf-8')
-            .split('\n')
-            .map(t => t.trim());
-        const tokens: string[] = !savedTokens.length ? [this.config.get('INIT_AUTH_TOKEN') as string] : savedTokens;
+            .split(/\r?\n/)
+            .map(t => t.trim())
+            .filter(Boolean);
+        const tokens: string[] = !savedTokens.length ? [this.config.get('INIT_AUTH_TOKEN')+''] : savedTokens;
 
         if (tokens.includes(token)) {
             req.session.user = {

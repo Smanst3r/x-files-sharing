@@ -1,21 +1,23 @@
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
 import api from "@/lib/axios.ts";
 import { AxiosError } from "axios";
+import useCommonStyles from "@/styles.tsx";
 
 export function AuthGate({ children }: { children: ReactNode }) {
     const [checking, setChecking] = useState(true);
     const [authenticated, setAuthenticated] = useState(false);
     const [token, setToken] = useState('');
     const [error, setError] = useState('');
+    const [errorStatus, setErrorStatus] = useState<number|undefined>(undefined);
+    const commonClasses = useCommonStyles();
 
     useEffect(() => {
         api.get('/').then(() => {
             setAuthenticated(true);
         }).catch((reason: AxiosError) => {
             setAuthenticated(false);
-            if (reason.status !== 401) {
-                // TODO: log error
-            }
+            setErrorStatus(reason.status);
+            setError((reason.response?.data as string) || reason.message);
         }).finally(() => {
             setChecking(false);
         });
@@ -23,20 +25,39 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
     const submitToken = async (event: FormEvent) => {
         event.preventDefault();
+        setErrorStatus(undefined);
+        setError('');
         api.post('/auth', {
             token: token,
         }).then(() => {
+            setAuthenticated(true);
             window.location.reload();
         }).catch((reason: AxiosError) => {
             setError((reason.response?.data as string) || reason.message);
+            setErrorStatus(reason.status);
         });
     };
 
     if (checking) {
-        return <p>Checking auth...</p>;
+        return <h1 style={{ textAlign: 'center' }}>Checking auth...</h1>;
     }
 
     if (!authenticated) {
+        // Do not show token form if maximum attempts exceed
+        if (errorStatus && errorStatus === 429) {
+            return <div style={{ textAlign: 'center' }}>
+                <h1 className={commonClasses.textDanger}>Exceed max attempts</h1>
+                <p>{error}</p>
+            </div>
+        }
+
+        if (errorStatus !== 401) {
+            return <div style={{ textAlign: 'center' }}>
+                <h1 className={commonClasses.textDanger}>Unknown server error</h1>
+                <p>{error}</p>
+            </div>
+        }
+
         return (
             <form onSubmit={submitToken} style={{ maxWidth: 400, margin: '3rem auto' }} action={`${api.defaults.baseURL}/auth`}>
                 <h2>Enter Access Token</h2>

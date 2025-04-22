@@ -9,11 +9,10 @@ CREATE TABLE IF NOT EXISTS "uploaded_files"
     sessionId TEXT not null
 );
 
-
 DROP TABLE IF EXISTS "auth_token_invalid_attempts";
 CREATE TABLE IF NOT EXISTS "auth_token_invalid_attempts"
 (
     ip TEXT not null PRIMARY KEY,
     attempts INTEGER not null DEFAULT 0,
-    last_attempt_at TEXT not null
+    lastAttemptAt TEXT not null
 )

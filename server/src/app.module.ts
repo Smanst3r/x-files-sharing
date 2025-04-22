@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from "@nestjs/config";
@@ -9,6 +9,7 @@ import { UploadController } from "./upload.controller";
 import { AuthController } from "./auth/auth.controller";
 import { CleanupModule } from "./cleanup/cleanup.module";
 import { AuthInvalidAttemptEntity } from "./auth/auth-invalid-attempt.entity";
+import { AuthTooManyAttemptsMiddleware } from "./auth/auth-too-many-attempts.middleware";
 
 @Module({
     imports: [
@@ -25,5 +26,9 @@ import { AuthInvalidAttemptEntity } from "./auth/auth-invalid-attempt.entity";
     controllers: [AppController, UploadController, AuthController],
     providers: [AppService, UploadedFileRepository],
 })
-export class AppModule {
+export class AppModule implements NestModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer.apply(AuthTooManyAttemptsMiddleware).forRoutes('auth');
+        consumer.apply(AuthTooManyAttemptsMiddleware).forRoutes('');
+    }
 }
