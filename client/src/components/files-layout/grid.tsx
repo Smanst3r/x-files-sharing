@@ -12,7 +12,7 @@ import {
     TableColumnDefinition, TableColumnId,
     TableHeader, TableHeaderCell,
     TableRow, useTableFeatures, useTableSort,
-    Text, Subtitle1, tokens, Tooltip,
+    Text, Subtitle1, tokens, Tooltip, ProgressBar, Field,
 } from "@fluentui/react-components";
 import { formatFileSize } from "@/lib/utils.ts";
 import { format } from "date-fns";
@@ -70,6 +70,8 @@ type TUploadResponse = {
         token: string
         tokenIsExpired: boolean
         tokenExpiresAt: string
+        mtime: string
+        dateOfRemoval: string
     }[]
 }
 
@@ -139,6 +141,7 @@ export const Grid: FC = () => {
     const commonClasses = useCommonStyles();
     const [files, setFiles] = useState<TGridFile[]>([]);
     const [userAddedFiles, setUserAddedFiles] = useState<string[]>([]);
+    const [isLoadingFiles, setIsLoadingFiles] = useState<boolean>(true);
 
     const [sortState, setSortState] = useState<{
         sortDirection: "ascending" | "descending";
@@ -168,14 +171,12 @@ export const Grid: FC = () => {
     });
 
     const rows = sort(getRows());
-
-    const [filesDaysLifetime, setFilesDaysLifetime] = useState<number>(0);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
     useEffect(() => {
-        api.get('/user-files').then((response: AxiosResponse<{ files: TGridFile[], filesDaysLifetime: string }>) => {
+        api.get('/user-files').then((response: AxiosResponse<{ files: TGridFile[] }>) => {
             setFiles(response.data.files);
-            setFilesDaysLifetime(parseInt(response.data.filesDaysLifetime));
+            setIsLoadingFiles(false);
         })
         return () => {
             //
@@ -184,8 +185,8 @@ export const Grid: FC = () => {
 
     const handleUploadButton = (addedFiles: File[]) => {
         const readyToUploadFiles: TGridFile[] = [];
-        const validationErrors: string[] = [];
-        Array.from(addedFiles).forEach((file) => {
+
+        addedFiles.forEach((file) => {
             let gridFile: TGridFile;
             const existingFile = files.find(f => f.stat.name === file.name);
 
@@ -196,7 +197,7 @@ export const Grid: FC = () => {
                     stat: {
                         name: file.name,
                         size: file.size,
-                        mtime: new Date(file.lastModified).toString(),
+                        mtime: new Date().toString(),
                         isDirectory: false,
                         isFile: true,
                     },
@@ -246,12 +247,17 @@ export const Grid: FC = () => {
                                 tokenExpiresAt: new Date(uploadedFile.tokenExpiresAt),
                                 tokenIsExpired: uploadedFile.tokenIsExpired,
                                 downloadLink: uploadedFile.link,
+                                stat: {
+                                    ...f.stat,
+                                    mtime: uploadedFile.mtime,
+                                    dateOfRemoval: uploadedFile.dateOfRemoval,
+                                }
                             };
                         }
                         return f;
                     })
                 );
-            }).catch((reason: AxiosError) => {
+            }).catch((reason: AxiosError<{ message?: string }>) => {
                 setFiles(prev =>
                     prev.map(f => {
                         if (f.stat.name === file.name) {
@@ -259,7 +265,7 @@ export const Grid: FC = () => {
                                 ...f,
                                 isUploading: false,
                                 isUploadedSuccessfully: false,
-                                uploadError: reason.message,
+                                uploadError: reason.response?.data?.message ?? reason.message,
                             };
                         }
                         return f;
@@ -282,8 +288,6 @@ export const Grid: FC = () => {
             readyToUploadFiles.forEach(f => set.add(f.stat.name));
             return Array.from(set);
         });
-
-        setValidationErrors(validationErrors);
     }
 
     const onFileRemovedSuccess = (file: TGridFile) => {
@@ -303,14 +307,6 @@ export const Grid: FC = () => {
                     <Subtitle1 className={classes.gridHeaderHint}>Or drag and drop files anywhere on grid</Subtitle1>
                 </div>
             </h2>
-            <div style={{marginTop: '2rem', marginBottom: '2rem'}}>
-                <MessageBar intent="warning">
-                    <MessageBarBody>
-                        <MessageBarTitle>Please note</MessageBarTitle>
-                        Your files will be stored for {filesDaysLifetime} day{filesDaysLifetime === 1 ? '' : 's'}.
-                    </MessageBarBody>
-                </MessageBar>
-            </div>
 
             {validationErrors.length > 0
                 ? <MessageBar intent="error" layout="multiline">
@@ -342,6 +338,27 @@ export const Grid: FC = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
+                    {(isLoadingFiles && !userAddedFiles.length) &&
+                        <TableRow>
+                            <TableCell tabIndex={0} colSpan={columns.length}>
+                                <Field validationMessage="Loading files" validationState="none">
+                                    <ProgressBar />
+                                </Field>
+                            </TableCell>
+                        </TableRow>
+                    }
+                    {(!isLoadingFiles && !rows.length) &&
+                        <TableRow>
+                            <TableCell tabIndex={0} colSpan={columns.length}>
+                                <MessageBar>
+                                    <MessageBarBody>
+                                        <MessageBarTitle>Sorry</MessageBarTitle>
+                                        You don't have any files recently uploaded
+                                    </MessageBarBody>
+                                </MessageBar>
+                            </TableCell>
+                        </TableRow>
+                    }
                     {rows.map((rowData) => {
                         const file = rowData.item;
 

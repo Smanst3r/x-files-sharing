@@ -2,6 +2,7 @@ import SettingsDialog from "./components/settings-dialog.tsx";
 import ToggleTheme from "@/components/toggle-theme.tsx";
 import FilesGrid from "@/components/files-layout/grid.tsx";
 import { makeStyles } from "@fluentui/react-components";
+import { useAuth } from "@/auth-context.tsx";
 
 const useStyles = makeStyles({
     root: {
@@ -11,12 +12,13 @@ const useStyles = makeStyles({
 
 function App() {
     const classes = useStyles();
+    const auth = useAuth();
 
     return (
         <>
             <header className={classes.root}>
                 <nav>
-                    <SettingsDialog />
+                    {auth.authenticatedBy === 'ip' && <SettingsDialog />}
                     <ToggleTheme />
                 </nav>
             </header>

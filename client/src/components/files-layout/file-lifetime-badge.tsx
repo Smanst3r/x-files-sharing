@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { TGridFile } from "@/components/files-layout/grid.tsx";
-import { addDays, formatDistanceToNow, isBefore, parseISO } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { AlertRegular } from "@fluentui/react-icons";
 import { makeStyles, Tag, tokens } from "@fluentui/react-components";
 
@@ -24,20 +24,15 @@ export const FileLifetimeBadge: FC<TProps> = ({ file }) => {
 
     const classes = useStyles();
     const removalDate = parseISO(file.stat.dateOfRemoval);
-    const now = new Date();
-    const isExpiringSoon = isBefore(removalDate, addDays(now, 1));
 
-    if (isExpiringSoon) {
-        return (
-            <Tag icon={<AlertRegular className={classes.icon} />}
-                 size="small"
-                 className={classes.tag}
-                 appearance="filled">
-                File will be removed {formatDistanceToNow(removalDate, { addSuffix: true })}
-            </Tag>
-        );
-    }
-    return null;
+    return (
+        <Tag icon={<AlertRegular className={classes.icon} />}
+             size="small"
+             className={classes.tag}
+             appearance="filled">
+            File will be removed {formatDistanceToNow(removalDate, { addSuffix: true })}
+        </Tag>
+    );
 }
 
 export default FileLifetimeBadge;

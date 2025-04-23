@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CleanupService } from './cleanup.service';
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { UploadedFileEntity } from "../uploaded-file.entity";
+import { UploadedFileEntity } from "../upload/uploaded-file.entity";
 
 @Module({
   imports: [TypeOrmModule.forFeature([UploadedFileEntity])],

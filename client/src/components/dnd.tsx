@@ -4,6 +4,7 @@ import { makeStyles, tokens } from "@fluentui/react-components";
 
 type TProps = {
     onFilesAccepted: (files: File[]) => void;
+    disabled?: boolean
 };
 
 const useStyles = makeStyles({
@@ -27,7 +28,7 @@ const useStyles = makeStyles({
     },
 });
 
-const DnD: FC<PropsWithChildren<TProps>> = ({ onFilesAccepted, children }) => {
+const DnD: FC<PropsWithChildren<TProps>> = ({ onFilesAccepted, disabled, children }) => {
     const classes = useStyles();
     const [isDragging, setIsDragging] = useState(false);
 
@@ -44,6 +45,10 @@ const DnD: FC<PropsWithChildren<TProps>> = ({ onFilesAccepted, children }) => {
             setIsDragging(false);
         },
     });
+
+    if (disabled) {
+        return <>{children}</>;
+    }
 
     return (
         <div {...getRootProps()} style={{ position: 'relative' }}>

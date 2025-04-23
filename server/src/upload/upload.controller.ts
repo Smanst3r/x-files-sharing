@@ -10,8 +10,9 @@ import { diskStorage } from 'multer';
 import { extname, join, resolve, basename } from 'path';
 import { Request } from 'express';
 import * as fs from "fs";
-import { AppService } from "./app.service";
-import { paths } from "./main";
+import { AppService } from "../app.service";
+import { DEFAULT_FILES_LIFETIME_DAYS, paths } from "../main";
+import { ConfigService } from "@nestjs/config";
 
 type TResponseFile = {
     id: number
@@ -21,11 +22,20 @@ type TResponseFile = {
     token: string
     tokenIsExpired: boolean
     tokenExpiresAt: Date
+} & Partial<TFileStat>
+
+const getFileName = (file: Express.Multer.File): string => {
+    let originalFilename = Buffer.from(file.originalname, 'latin1').toString('utf8'); // This fix issue with cyrillic file names
+    originalFilename = basename(originalFilename);
+    let baseName = originalFilename.replace(extname(originalFilename), '');
+
+    const extension = extname(originalFilename);
+    return `${baseName}${extension}`;
 }
 
 @Controller('upload')
 export class UploadController {
-    constructor(private readonly appService: AppService) {}
+    constructor(private readonly appService: AppService, private readonly config: ConfigService) {}
 
     @Post()
     @UseInterceptors(
@@ -46,16 +56,10 @@ export class UploadController {
                         cb(null, userDirectory);
                     },
                     filename: (req, file, cb) => {
-                        let originalFilename = Buffer.from(file.originalname, 'latin1').toString('utf8'); // This fix issue with cyrillic file names
-                        originalFilename = basename(originalFilename);
-                        let baseName = originalFilename.replace(extname(originalFilename), '');
-
-                        const extension = extname(originalFilename);
-                        const fileName = `${baseName}${extension}`;
-                        cb(null, fileName);
+                        cb(null, getFileName(file));
                     },
                 }),
-            }
+            },
         )
     )
     async uploadFile(@UploadedFiles() files: { file?: Express.Multer.File[] }, @Req() req: Request) {
@@ -65,6 +69,7 @@ export class UploadController {
             throw new InternalServerErrorException('Not found upload dir for user session');
         }
 
+        const uploadedFilesTtl = parseInt(this.config.get('UPLOADED_FILES_LIFETIME_DAYS', DEFAULT_FILES_LIFETIME_DAYS+''));
         const response: { statusCode: number, files: TResponseFile[] } = {
             statusCode: 200,
             files: [],
@@ -72,7 +77,10 @@ export class UploadController {
 
         if (files?.file) {
             for (const file of files.file) {
-                const fileEntity = await this.appService.saveFile(file.filename, sessionId, uploadDir);
+                const fileName = getFileName(file);
+                const fileEntity = await this.appService.saveFile(fileName, sessionId, uploadDir);
+                const fullPath = resolve(paths.uploads, uploadDir, fileName);
+                const stat = fs.statSync(fullPath);
 
                 response.files.push({
                     id: fileEntity.id,
@@ -82,6 +90,8 @@ export class UploadController {
                     token: fileEntity.token,
                     tokenIsExpired: new Date() > fileEntity.expiresAt,
                     tokenExpiresAt: fileEntity.expiresAt,
+                    mtime: stat.mtime,
+                    dateOfRemoval: new Date(stat.mtime.getTime() + uploadedFilesTtl * 24 * 60 * 60 * 1000),
                 });
             }
         }

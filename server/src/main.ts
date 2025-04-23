@@ -9,6 +9,8 @@ import { join, resolve } from "path";
 import * as fs from "fs";
 import { AuthGuard } from "./auth/auth.guard";
 import { Logger, RequestMethod } from "@nestjs/common";
+import helmet from "helmet";
+import * as express from 'express';
 
 // Setup application root paths
 const rootPath = resolve(join(__dirname, '..'));
@@ -21,6 +23,8 @@ export const paths = {
 
 export const AUTH_TOKEN_MAX_INVALID_ATTEMPTS = 5;
 export const AUTH_TOKEN_MAX_INVALID_ATTEMPTS_HOURS = 1; // per hour
+export const DEFAULT_FILES_LIFETIME_DAYS = 2;
+export const DEFAULT_STORAGE_MAX_CAPACITY = 100 * 1024 * 1024 * 1024; // 100 GB
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -28,14 +32,21 @@ async function bootstrap() {
     const config = app.get(ConfigService);
     const logger = new Logger('Bootstrap');
 
+    // https://docs.nestjs.com/security/helmet
+    app.use(helmet());
+
     if (!config.get('INIT_ALLOWED_IP')) {
-        logger.error('Please set required INIT_ALLOWED_IP environment variable. Application closed');
-        return await app.close();
+        logger.error('Please set required INIT_ALLOWED_IP environment variable');
     }
     if (!config.get('INIT_AUTH_TOKEN')) {
-        logger.error('Please set required INIT_AUTH_TOKEN environment variable. Application closed');
-        return await app.close();
+        logger.error('Please set required INIT_AUTH_TOKEN environment variable');
     }
+    if (!config.get('UPLOADS_STORAGE_MAX_CAPACITY')) {
+        logger.error('Please set required UPLOADS_STORAGE_MAX_CAPACITY environment variable.');
+    }
+
+    app.use(express.json({ limit: '1mb' })); // JSON post request body limit
+    app.use(express.urlencoded({ limit: '2mb', extended: true })); // Form post request body limit
 
     const staticPath = resolve(join(rootPath, 'public'));
     if (!fs.existsSync(staticPath)) {

@@ -3,14 +3,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { UploadedFileEntity } from "./uploaded-file.entity";
-import { UploadedFileRepository } from "./uploaded-file.repository";
-import { UploadController } from "./upload.controller";
+import { UploadedFileEntity } from "./upload/uploaded-file.entity";
+import { UploadedFileRepository } from "./upload/uploaded-file.repository";
 import { AuthController } from "./auth/auth.controller";
 import { CleanupModule } from "./cleanup/cleanup.module";
 import { AuthInvalidAttemptEntity } from "./auth/auth-invalid-attempt.entity";
 import { AuthTooManyAttemptsMiddleware } from "./auth/auth-too-many-attempts.middleware";
 import { join, resolve } from "path";
+import { UploadModule } from "./upload/upload.module";
 
 @Module({
     imports: [
@@ -23,8 +23,9 @@ import { join, resolve } from "path";
         }),
         TypeOrmModule.forFeature([UploadedFileEntity, AuthInvalidAttemptEntity]),
         CleanupModule,
+        UploadModule,
     ],
-    controllers: [AppController, UploadController, AuthController],
+    controllers: [AppController, AuthController],
     providers: [AppService, UploadedFileRepository],
 })
 export class AppModule implements NestModule {

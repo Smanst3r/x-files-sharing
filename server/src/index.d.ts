@@ -3,6 +3,7 @@ declare module "express-session" {
         user?: {
             authenticated: boolean
             uploadDir: string
+            authedBy: 'ip'|'token'
         };
     }
 }

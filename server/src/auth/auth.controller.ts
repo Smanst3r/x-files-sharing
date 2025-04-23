@@ -29,16 +29,22 @@ export class AuthController {
             }
         }
 
+        const initAuthToken: string = this.config.get('INIT_AUTH_TOKEN', '')+'';
         const savedTokens = fs.readFileSync(paths.tokensFile, 'utf-8')
             .split(/\r?\n/)
             .map(t => t.trim())
             .filter(Boolean);
-        const tokens: string[] = !savedTokens.length ? [this.config.get('INIT_AUTH_TOKEN')+''] : savedTokens;
+        if (!savedTokens.length && !initAuthToken) {
+            return res.status(500).send('The application can not function as the authentication is not properly configured.');
+        }
+
+        const tokens: string[] = [...savedTokens, initAuthToken];
 
         if (tokens.includes(token)) {
             req.session.user = {
                 authenticated: true,
                 uploadDir: req.sessionID,
+                authedBy: 'token'
             };
 
             if (existingInvalidAttempt) {
@@ -56,7 +62,7 @@ export class AuthController {
                 await this.invalidAttemptsRepo.save(attempt);
             }
 
-            res.status(401).send('Invalid token, please contact developer to get a valid token');
+            res.status(401).send('Invalid authentication token, please contact administrator to get a valid token.');
         }
     }
 }

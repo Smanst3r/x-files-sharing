@@ -4,9 +4,9 @@ import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UploadedFileEntity } from "../uploaded-file.entity";
+import { UploadedFileEntity } from "../upload/uploaded-file.entity";
 import { join } from "path";
-import { paths } from "../main";
+import { DEFAULT_FILES_LIFETIME_DAYS, paths } from "../main";
 
 @Injectable()
 export class CleanupService {
@@ -18,7 +18,7 @@ export class CleanupService {
         @InjectRepository(UploadedFileEntity)
         private readonly filesRepo: Repository<UploadedFileEntity>,
     ) {
-        const days = parseInt(this.configService.get('UPLOADED_FILES_LIFETIME_DAYS', '7'), 10);
+        const days = parseInt(this.configService.get('UPLOADED_FILES_LIFETIME_DAYS', DEFAULT_FILES_LIFETIME_DAYS+''), 10);
         this.fileLifetimeMs = days * 24 * 60 * 60 * 1000;
     }
 

@@ -1,12 +1,12 @@
-import { ChangeEvent, FC, useRef } from "react";
+import { ChangeEvent, ComponentProps, FC, useRef } from "react";
 import { Button } from "@fluentui/react-components";
 import { DocumentAddRegular } from "@fluentui/react-icons/lib/fonts";
 
 type TProps = {
     handleUpload: (files: FileList) => void
-}
+} & ComponentProps<typeof Button>
 
-export const UploadButton: FC<TProps> = ({ handleUpload }) => {
+export const UploadButton: FC<TProps> = ({ handleUpload, disabled }) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleButtonClick = () => {
@@ -23,6 +23,7 @@ export const UploadButton: FC<TProps> = ({ handleUpload }) => {
         <Button
             style={{ fontWeight: 'normal' }}
             size="large"
+            disabled={disabled}
             appearance="primary"
             icon={<DocumentAddRegular />}
             onClick={handleButtonClick}>
@@ -30,6 +31,7 @@ export const UploadButton: FC<TProps> = ({ handleUpload }) => {
         </Button>
         <input
             type="file"
+            disabled={disabled}
             multiple={true}
             ref={inputRef}
             style={{ display: 'none' }}

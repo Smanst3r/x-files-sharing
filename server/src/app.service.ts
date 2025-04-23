@@ -1,18 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from "fs";
-import { UploadedFileRepository } from "./uploaded-file.repository";
-import { UploadedFileEntity } from "./uploaded-file.entity";
+import { UploadedFileRepository } from "./upload/uploaded-file.repository";
+import { UploadedFileEntity } from "./upload/uploaded-file.entity";
 import { join, resolve } from "path";
-import { paths } from "./main";
+import { DEFAULT_FILES_LIFETIME_DAYS, paths } from "./main";
 
 @Injectable()
 export class AppService {
     constructor(private config: ConfigService, private readonly uploadedFileRepository: UploadedFileRepository) {}
-
-    getHello(): string {
-        return 'Hello World!';
-    }
 
     async getFileByToken(token: string) {
         return this.uploadedFileRepository.findFileByToken(token);
@@ -59,7 +55,7 @@ export class AppService {
 
     async getUserFiles(sessionId: string, uploadDir: string) {
         const dir = resolve(join(paths.uploads, uploadDir));
-        const uploadedFilesTtl = parseInt(this.config.get('UPLOADED_FILES_LIFETIME_DAYS', '0'));
+        const uploadedFilesTtl = parseInt(this.config.get('UPLOADED_FILES_LIFETIME_DAYS', DEFAULT_FILES_LIFETIME_DAYS+''));
 
         if (fs.existsSync(dir)) {
             const fsFiles = fs.readdirSync(dir).map((filename) => {
@@ -73,10 +69,8 @@ export class AppService {
                     ctime: stats.ctime,
                     isFile: stats.isFile(),
                     isDirectory: stats.isDirectory(),
+                    dateOfRemoval: new Date(stats.mtime.getTime() + uploadedFilesTtl * 24 * 60 * 60 * 1000),
                 };
-                if (uploadedFilesTtl) {
-                    fileStat.dateOfRemoval = new Date(stats.mtime.getTime() + uploadedFilesTtl * 24 * 60 * 60 * 1000);
-                }
 
                 return fileStat;
             });
