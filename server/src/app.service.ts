@@ -95,7 +95,7 @@ export class AppService {
                             token: fileTokenData.token,
                             tokenExpiresAt: fileTokenData.expiresAt,
                             tokenIsExpired: new Date() > fileTokenData.expiresAt,
-                            downloadLink: `/share/${fileTokenData.token}`,
+                            downloadLink: `/d/${fileTokenData.token}`,
                         })
                     };
 

@@ -21,16 +21,11 @@ export default defineConfig({
                 changeOrigin: true,
                 secure: false,
             },
-            '/share': {
+            '/d': {
                 target: 'http://localhost:3333',
                 changeOrigin: true,
                 secure: false,
             },
-            '/download': {
-                target: 'http://localhost:3333',
-                changeOrigin: true,
-                secure: false,
-            }
         },
     },
 })

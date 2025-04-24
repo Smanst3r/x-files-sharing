@@ -28,5 +28,4 @@ get_status_code $WEBSITE_API/website-settings
 get_status_code $WEBSITE_API/user-files
 get_status_code $WEBSITE_API/auth
 post_and_get_status $WEBSITE_API/auth
-get_status_code $WEBSITE/share/123
-get_status_code $WEBSITE/download/123
+get_status_code $WEBSITE/d/123

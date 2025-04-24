@@ -10,7 +10,10 @@ export const useCommonStyles = makeStyles({
         color: tokens.colorPaletteGreenForeground1
     },
     textDanger: {
-        color: tokens.colorPaletteRedForeground1
+        color: tokens.colorPaletteRedForeground1,
+        ':hover': {
+            color: tokens.colorPaletteRedForeground1,
+        }
     }
 });
 

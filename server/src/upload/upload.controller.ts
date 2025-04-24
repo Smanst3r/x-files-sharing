@@ -86,7 +86,7 @@ export class UploadController {
                     id: fileEntity.id,
                     fileName: file.filename,
                     size: file.size,
-                    link: `/share/${fileEntity.token}`,
+                    link: `/d/${fileEntity.token}`,
                     token: fileEntity.token,
                     tokenIsExpired: new Date() > fileEntity.expiresAt,
                     tokenExpiresAt: fileEntity.expiresAt,

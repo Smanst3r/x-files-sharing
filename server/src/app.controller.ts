@@ -60,44 +60,18 @@ export class AppController {
         }
     }
 
-    @Get('share/:token')
-    async downloadByToken(
-        @Req() req: Request,
-        @Param('token') token: string,
-        @Res() res: Response,
-    ) {
+    @Get('d/:token')
+    async downloadByToken(@Req() req: Request, @Param('token') token: string, @Res() res: Response) {
         const fileData = await this.appService.getFileByToken(token);
 
         if (!fileData) {
-            throw new NotFoundException('File not found or link has expired');
+            throw new NotFoundException('Not found');
         }
         if (new Date() > fileData.expiresAt) {
             throw new NotFoundException('Download link has expired');
         }
 
-        res.setHeader(
-            'Content-Disposition',
-            `filename="${encodeURIComponent(fileData.fileName)}"`,
-        );
-        return res.sendFile(fileData.fileName, { root: resolve(join(paths.uploads, fileData.dirName)) });
-    }
-
-    @Get('download/:fileId')
-    async downloadMyFile(@Param('fileId') fileIdParam: string, @Req() req: Request, @Res() res: Response) {
-        const sessionId = req.sessionID;
-        const fileId = parseInt(fileIdParam, 10);
-        const fileData = await this.appService.getFile(fileId);
-
-        if (!req.session.user?.authenticated || fileData?.sessionId !== sessionId) {
-            // User can download only his files
-            return res.status(401).send();
-        }
-
-        if (!fileData) {
-            return res.status(404).send();
-        }
-
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileData.fileName)}"`);
+        res.setHeader('Content-Disposition', `filename="${encodeURIComponent(fileData.fileName)}"`);
         return res.sendFile(fileData.fileName, { root: resolve(join(paths.uploads, fileData.dirName)) });
     }
 }

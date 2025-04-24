@@ -12,7 +12,7 @@ import {
     TableColumnDefinition, TableColumnId,
     TableHeader, TableHeaderCell,
     TableRow, useTableFeatures, useTableSort,
-    Text, Subtitle1, tokens, Tooltip, ProgressBar, Field,
+    Text, Subtitle1, tokens, Tooltip, ProgressBar, Field, TableRowData,
 } from "@fluentui/react-components";
 import { formatFileSize } from "@/lib/utils.ts";
 import { format, formatDistanceToNow } from "date-fns";
@@ -25,9 +25,10 @@ import UploadButton from "@/components/files-layout/upload-button.tsx";
 import CopyShareLinkButton from "@/components/files-layout/copy-share-link-button.tsx";
 import api from "@/lib/axios.ts";
 import { AxiosError, AxiosResponse } from "axios";
-import FileActionsMenu from "@/components/files-layout/file-actions-menu.tsx";
 import FileUploadProgress from "@/components/files-layout/file-upload-progress.tsx";
 import DnD from "@/components/dnd.tsx";
+import DownloadFileButton from "@/components/files-layout/download-file-button.tsx";
+import RemoveFileButton from "@/components/files-layout/remove-file-button.tsx";
 
 type TFileStat = {
     name: string,
@@ -56,6 +57,7 @@ type TUploadedFile = {
 
 export type TGridFile = {
     stat: TFileStat
+    userAddedAt?: Date
 } & Partial<TUploadingFile> & Partial<TUploadedFile>;
 
 type TUploadResponse = {
@@ -112,6 +114,10 @@ const useStyles = makeStyles({
 
 const columns: TableColumnDefinition<TGridFile>[] = [
     createTableColumn<TGridFile>({
+        columnId: 'actions',
+        renderHeaderCell: () => undefined,
+    }),
+    createTableColumn<TGridFile>({
         columnId: 'filename',
         compare: (a, b) => a.stat.name.localeCompare(b.stat.name),
         renderHeaderCell: () => <Text weight="bold">Filename</Text>,
@@ -122,7 +128,13 @@ const columns: TableColumnDefinition<TGridFile>[] = [
         renderHeaderCell: () => <Text weight="bold">Size</Text>,
     }),
     createTableColumn<TGridFile>({
-        columnId: 'expiresAt',
+        columnId: 'tokenExpiresAt',
+        compare: (a, b) => {
+            if (a.tokenExpiresAt && b.tokenExpiresAt) {
+                return new Date(a.tokenExpiresAt).getTime() - new Date(b.tokenExpiresAt).getTime();
+            }
+            return 0;
+        },
         renderHeaderCell: () => <TableCellLayout style={{justifyContent: 'end', whiteSpace: 'nowrap'}}>
             <Text weight="bold">Expires in</Text>
         </TableCellLayout>,
@@ -136,19 +148,14 @@ const columns: TableColumnDefinition<TGridFile>[] = [
             <Text weight="bold">Last modified</Text>
         </TableCellLayout>,
     }),
-    createTableColumn<TGridFile>({
-        columnId: 'actions',
-        renderHeaderCell: () => undefined,
-    })
-]
+];
 
 export const Grid: FC = () => {
     const classes = useStyles();
     const commonClasses = useCommonStyles();
     const [files, setFiles] = useState<TGridFile[]>([]);
-    const [userAddedFiles, setUserAddedFiles] = useState<string[]>([]);
     const [isLoadingFiles, setIsLoadingFiles] = useState<boolean>(true);
-
+    const [validationErrors, setValidationErrors] = useState<string[]>([]);
     const [sortState, setSortState] = useState<{
         sortDirection: "ascending" | "descending";
         sortColumn: TableColumnId | undefined;
@@ -156,9 +163,47 @@ export const Grid: FC = () => {
         sortDirection: "descending" as const,
         sortColumn: "mtime",
     });
+
+    // Sort files so the newly added files should be on the top of table
+    const getSortedFiles = (files: TableRowData<TGridFile>[]): TableRowData<TGridFile>[] => {
+        return [...files].sort((aRow, bRow) => {
+            const a = aRow.item;
+            const b = bRow.item;
+            const isANewlyAdded = !!a.userAddedAt;
+            const isBNewlyAdded = !!b.userAddedAt;
+
+            if (isANewlyAdded && !isBNewlyAdded) {
+                return -1;
+            }
+            if (!isANewlyAdded && isBNewlyAdded) {
+                return 1;
+            }
+            if (isANewlyAdded && isBNewlyAdded) {
+                return new Date(b.userAddedAt as Date).getTime() - new Date(a.userAddedAt as Date).getTime();
+            }
+
+            const { sortColumn, sortDirection } = sortState;
+            if (!sortColumn) {
+                return 0;
+            }
+
+            const column = columns.find(c => c.columnId === sortColumn);
+            if (!column || !column.compare) {
+                return 0;
+            }
+
+            const compareResult = column.compare!(a, b);
+            return sortDirection === "ascending" ? compareResult : -compareResult;
+        });
+    };
+
     const {
         getRows,
-        sort: {getSortDirection, toggleColumnSort, sort},
+        sort: {
+            getSortDirection,
+            toggleColumnSort,
+            // sort
+        },
     } = useTableFeatures(
         {
             columns,
@@ -171,13 +216,15 @@ export const Grid: FC = () => {
             }),
         ]
     );
-    const headerSortProps = (columnId: TableColumnId) => ({
-        onClick: (e: MouseEvent) => toggleColumnSort(e, columnId),
-        sortDirection: getSortDirection(columnId),
-    });
-
-    const rows = sort(getRows());
-    const [validationErrors, setValidationErrors] = useState<string[]>([]);
+    const headerSortProps = (columnId: TableColumnId) => {
+        if (columnId === 'actions') {
+            return {};
+        }
+        return {
+            onClick: (e: MouseEvent) => toggleColumnSort(e, columnId),
+            sortDirection: getSortDirection(columnId),
+        }
+    };
 
     useEffect(() => {
         api.get('/user-files').then((response: AxiosResponse<{ files: TGridFile[] }>) => {
@@ -197,7 +244,13 @@ export const Grid: FC = () => {
             const existingFile = files.find(f => f.stat.name === file.name);
 
             if (existingFile) {
-                gridFile = {...existingFile, isUploading: true, isUploadedSuccessfully: false, uploadError: ''};
+                gridFile = {
+                    ...existingFile,
+                    isUploading: true,
+                    isUploadedSuccessfully: false,
+                    uploadError: '',
+                    userAddedAt: new Date(),
+                };
             } else {
                 gridFile = {
                     stat: {
@@ -210,6 +263,7 @@ export const Grid: FC = () => {
                     isUploading: true,
                     isUploadedSuccessfully: false,
                     uploadError: '',
+                    userAddedAt: new Date(),
                 }
             }
 
@@ -287,13 +341,6 @@ export const Grid: FC = () => {
             readyToUploadFiles.forEach(f => updatedMap.set(f.stat.name, f));
             return Array.from(updatedMap.values());
         });
-
-        // Avoid duplicates
-        setUserAddedFiles(prev => {
-            const set = new Set(prev);
-            readyToUploadFiles.forEach(f => set.add(f.stat.name));
-            return Array.from(set);
-        });
     }
 
     const onFileRemovedSuccess = (file: TGridFile) => {
@@ -303,6 +350,9 @@ export const Grid: FC = () => {
     const onFileRemovedFailure = (error: string) => {
         setValidationErrors([error]);
     }
+
+    // const rows = sort(getRows());
+    const rows = getSortedFiles(getRows());
 
     return <DnD onFilesAccepted={handleUploadButton}>
         <div className={classes.root} id="files-grid">
@@ -337,7 +387,7 @@ export const Grid: FC = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {(isLoadingFiles && !userAddedFiles.length) &&
+                    {(isLoadingFiles && !rows.length) &&
                         <TableRow>
                             <TableCell tabIndex={0} colSpan={columns.length}>
                                 <Field validationMessage="Loading files" validationState="none">
@@ -362,14 +412,23 @@ export const Grid: FC = () => {
                         const file = rowData.item;
 
                         return <TableRow key={rowData.rowId}>
+                            <TableCell tabIndex={0} style={{ whiteSpace: 'nowrap', textAlign: 'right', width: '1%' }}>
+                                <div style={{ display: 'inline-flex', gap: '5px' }}>
+                                    {!!file.downloadLink && <CopyShareLinkButton downloadLink={file.downloadLink}/>}
+                                    {!!file.id && <DownloadFileButton file={file} />}
+                                    {!!file.id && <RemoveFileButton fileId={file.id}
+                                                                    onFileRemovedSuccess={() => onFileRemovedSuccess(file)}
+                                                                    onFileRemovedFailure={onFileRemovedFailure} />}
+                                </div>
+                            </TableCell>
                             <TableCell tabIndex={0}>
                                 <TableCellLayout media={
-                                    (userAddedFiles.includes(file.stat.name) && file.isUploadedSuccessfully)
+                                    (!!file.userAddedAt && file.isUploadedSuccessfully)
                                         ? <Tooltip content="New file" relationship="label">
                                             <NewRegular/>
                                         </Tooltip>
                                         : <></>
-                                }>
+                                } appearance="primary" description={file.downloadLink ? file.downloadLink : undefined}>
                                     <Text>
                                         <span style={{marginRight: '5px'}}>{file.stat.name}</span>
                                         {file.isUploading === true && <SpinnerIosRegular className={classes.spinner}/>}
@@ -394,12 +453,6 @@ export const Grid: FC = () => {
                             </TableCell>
                             <TableCell tabIndex={0} style={{textAlign: 'right', whiteSpace: 'nowrap'}}>
                                 {format(file.stat.mtime, 'MMM dd, yyyy HH:mm')}
-                            </TableCell>
-                            <TableCell tabIndex={0} style={{textAlign: 'right', whiteSpace: 'nowrap'}}>
-                                {!!file.downloadLink && <CopyShareLinkButton downloadLink={file.downloadLink}/>}
-                                {!!file.id && <FileActionsMenu fileId={file.id}
-                                                               onFileRemovedSuccess={() => onFileRemovedSuccess(file)}
-                                                               onFileRemovedFailure={onFileRemovedFailure}/>}
                             </TableCell>
                         </TableRow>
                     })}

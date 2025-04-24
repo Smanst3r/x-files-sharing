@@ -60,8 +60,7 @@ async function bootstrap() {
     app.useGlobalGuards(new AuthGuard(config));
     app.setGlobalPrefix('api', {
         exclude: [
-            { path: 'share/:token', method: RequestMethod.GET },
-            { path: 'download/:fileId', method: RequestMethod.GET },
+            { path: 'd/:token', method: RequestMethod.GET },
         ],
     });
     app.enableCors({
