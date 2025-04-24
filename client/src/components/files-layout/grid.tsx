@@ -15,7 +15,7 @@ import {
     Text, Subtitle1, tokens, Tooltip, ProgressBar, Field,
 } from "@fluentui/react-components";
 import { formatFileSize } from "@/lib/utils.ts";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
     SpinnerIosRegular,
     NewRegular
@@ -26,8 +26,6 @@ import CopyShareLinkButton from "@/components/files-layout/copy-share-link-butto
 import api from "@/lib/axios.ts";
 import { AxiosError, AxiosResponse } from "axios";
 import FileActionsMenu from "@/components/files-layout/file-actions-menu.tsx";
-import FileLifetimeBadge from "@/components/files-layout/file-lifetime-badge.tsx";
-import FileTokenBadge from "@/components/files-layout/file-token-badge.tsx";
 import FileUploadProgress from "@/components/files-layout/file-upload-progress.tsx";
 import DnD from "@/components/dnd.tsx";
 
@@ -124,11 +122,19 @@ const columns: TableColumnDefinition<TGridFile>[] = [
         renderHeaderCell: () => <Text weight="bold">Size</Text>,
     }),
     createTableColumn<TGridFile>({
+        columnId: 'expiresAt',
+        renderHeaderCell: () => <TableCellLayout style={{justifyContent: 'end', whiteSpace: 'nowrap'}}>
+            <Text weight="bold">Expires in</Text>
+        </TableCellLayout>,
+    }),
+    createTableColumn<TGridFile>({
         columnId: 'mtime',
         compare: (a, b) => {
             return new Date(b.stat.mtime).getTime() - new Date(a.stat.mtime).getTime();
         },
-        renderHeaderCell: () => <Text weight="bold">Last modified</Text>,
+        renderHeaderCell: () => <TableCellLayout style={{justifyContent: 'end'}}>
+            <Text weight="bold">Last modified</Text>
+        </TableCellLayout>,
     }),
     createTableColumn<TGridFile>({
         columnId: 'actions',
@@ -320,21 +326,14 @@ export const Grid: FC = () => {
                 : <></>
             }
 
-            <Table style={{width: "100%", tableLayout: 'auto'}}>
+            <Table style={{width: "100%", tableLayout: 'auto'}} sortable>
                 <TableHeader>
                     <TableRow>
-                        <TableHeaderCell {...headerSortProps("filename")}>
-                            <Text weight="bold">Filename</Text>
-                        </TableHeaderCell>
-                        <TableHeaderCell {...headerSortProps("size")}>
-                            <Text weight="bold">Size</Text>
-                        </TableHeaderCell>
-                        <TableHeaderCell {...headerSortProps("mtime")}>
-                            <TableCellLayout style={{justifyContent: 'end'}}>
-                                <Text weight="bold">Last modified</Text>
-                            </TableCellLayout>
-                        </TableHeaderCell>
-                        <TableHeaderCell></TableHeaderCell>
+                        {columns.map((col) => {
+                            return <TableHeaderCell key={`th-${col.columnId}`} {...headerSortProps(col.columnId)}>
+                                {col.renderHeaderCell()}
+                            </TableHeaderCell>
+                        })}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -374,8 +373,6 @@ export const Grid: FC = () => {
                                     <Text>
                                         <span style={{marginRight: '5px'}}>{file.stat.name}</span>
                                         {file.isUploading === true && <SpinnerIosRegular className={classes.spinner}/>}
-                                        <FileTokenBadge file={file}/>
-                                        <FileLifetimeBadge file={file}/>
                                     </Text>
                                     <FileUploadProgress file={file}/>
                                     {!!file.uploadError
@@ -388,6 +385,12 @@ export const Grid: FC = () => {
                             </TableCell>
                             <TableCell tabIndex={0} style={{whiteSpace: 'nowrap'}}>
                                 {formatFileSize(file.stat.size)}
+                            </TableCell>
+                            <TableCell tabIndex={0} style={{textAlign: 'right', whiteSpace: 'nowrap'}}>
+                                {file.tokenExpiresAt ? <>
+                                    {format(file.tokenExpiresAt, 'MMM dd, yyyy HH:mm')}{' '}
+                                    ({formatDistanceToNow(file.tokenExpiresAt, { addSuffix: true })})
+                                </> : undefined}
                             </TableCell>
                             <TableCell tabIndex={0} style={{textAlign: 'right', whiteSpace: 'nowrap'}}>
                                 {format(file.stat.mtime, 'MMM dd, yyyy HH:mm')}
