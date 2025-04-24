@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as fs from "fs";
-import { UploadedFileRepository } from "./upload/uploaded-file.repository";
+import * as fs from 'fs';
+import { UploadedFileRepository } from './upload/uploaded-file.repository';
 import { UploadedFileEntity } from "./upload/uploaded-file.entity";
 import { join, resolve } from "path";
 import { DEFAULT_FILES_LIFETIME_DAYS, paths } from "./main";
 
 @Injectable()
 export class AppService {
-    constructor(private config: ConfigService, private readonly uploadedFileRepository: UploadedFileRepository) {}
+    constructor(
+        private config: ConfigService,
+        private readonly uploadedFileRepository: UploadedFileRepository,
+    ) {}
 
     async getFileByToken(token: string) {
         return this.uploadedFileRepository.findFileByToken(token);

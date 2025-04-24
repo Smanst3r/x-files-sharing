@@ -61,7 +61,11 @@ export class AppController {
     }
 
     @Get('share/:token')
-    async downloadByToken(@Req() req: Request, @Param('token') token: string, @Res() res: Response) {
+    async downloadByToken(
+        @Req() req: Request,
+        @Param('token') token: string,
+        @Res() res: Response,
+    ) {
         const fileData = await this.appService.getFileByToken(token);
 
         if (!fileData) {
@@ -71,7 +75,10 @@ export class AppController {
             throw new NotFoundException('Download link has expired');
         }
 
-        res.setHeader('Content-Disposition', `filename="${encodeURIComponent(fileData.fileName)}"`);
+        res.setHeader(
+            'Content-Disposition',
+            `filename="${encodeURIComponent(fileData.fileName)}"`,
+        );
         return res.sendFile(fileData.fileName, { root: resolve(join(paths.uploads, fileData.dirName)) });
     }
 
