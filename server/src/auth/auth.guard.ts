@@ -19,7 +19,11 @@ export class AuthGuard implements CanActivate {
             return true;
         }
 
-        if (req.path.replace('\/$', '') === '/api/auth' && req.method.toLowerCase() === 'post') {
+        const requestPath = req.path.replace('\/$', '');
+        if (requestPath === '/api/auth' && req.method.toLowerCase() === 'post') {
+            return true;
+        }
+        if (requestPath.startsWith('/d/')) {
             return true;
         }
 

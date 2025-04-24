@@ -1,6 +1,5 @@
 import { FC, useRef, useState } from "react";
 import { Button } from "@fluentui/react-components";
-import { CheckmarkRegular, ClipboardRegular } from "@fluentui/react-icons";
 
 type TProps = {
     downloadLink: string
@@ -21,11 +20,8 @@ export const CopyShareLinkButton: FC<TProps> = ({ downloadLink }) => {
         }, 1500);
     }
 
-    return <Button appearance="primary"
-                   style={{ marginRight: '5px' }}
-                   icon={copied ? <CheckmarkRegular /> : <ClipboardRegular />}
-                   onClick={handleCopy}>
-        {copied ? 'Copied' : 'Share'}
+    return <Button appearance="primary" onClick={handleCopy}>
+        {copied ? 'Copied' : 'Copy Link'}
     </Button>
 }
 
