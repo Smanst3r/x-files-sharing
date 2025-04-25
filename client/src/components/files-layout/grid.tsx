@@ -47,7 +47,6 @@ type TUploadedFile = {
     id: number
     token: string
     tokenExpiresAt: Date
-    tokenIsExpired: boolean
     downloadLink: string
 }
 
@@ -64,7 +63,6 @@ type TUploadResponse = {
         link: string
         size: number
         token: string
-        tokenIsExpired: boolean
         tokenExpiresAt: string
         mtime: string
     }[]
@@ -265,7 +263,6 @@ export const Grid: FC = () => {
                                 uploadError: '',
                                 token: uploadedFile.token,
                                 tokenExpiresAt: new Date(uploadedFile.tokenExpiresAt),
-                                tokenIsExpired: uploadedFile.tokenIsExpired,
                                 downloadLink: uploadedFile.link,
                                 stat: {
                                     ...f.stat,

@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as fs from "fs";
 import { UploadedFileRepository } from "./upload/uploaded-file.repository";
 import { UploadedFileEntity } from "./upload/uploaded-file.entity";
 import { join, resolve } from "path";
-import { DEFAULT_FILES_LIFETIME_DAYS, paths } from "./main";
+import { paths } from "./main";
 
 @Injectable()
 export class AppService {
-    constructor(private config: ConfigService, private readonly uploadedFileRepository: UploadedFileRepository) {}
+    constructor(private readonly uploadedFileRepository: UploadedFileRepository) {}
 
     async getFileByToken(token: string) {
         return this.uploadedFileRepository.findFileByToken(token);
@@ -55,7 +54,6 @@ export class AppService {
 
     async getUserFiles(sessionId: string, uploadDir: string) {
         const dir = resolve(join(paths.uploads, uploadDir));
-        const uploadedFilesTtl = parseInt(this.config.get('UPLOADED_FILES_LIFETIME_DAYS', DEFAULT_FILES_LIFETIME_DAYS+''));
 
         if (fs.existsSync(dir)) {
             const fsFiles = fs.readdirSync(dir).map((filename) => {
@@ -87,7 +85,6 @@ export class AppService {
                             id: fileTokenData.id,
                             token: fileTokenData.token,
                             tokenExpiresAt: fileTokenData.expiresAt,
-                            tokenIsExpired: new Date() > fileTokenData.expiresAt,
                             downloadLink: `/d/${fileTokenData.token}`,
                         })
                     };

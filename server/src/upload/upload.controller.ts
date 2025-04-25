@@ -11,8 +11,7 @@ import { extname, join, resolve, basename } from 'path';
 import { Request } from 'express';
 import * as fs from "fs";
 import { AppService } from "../app.service";
-import { DEFAULT_FILES_LIFETIME_DAYS, paths } from "../main";
-import { ConfigService } from "@nestjs/config";
+import { paths } from "../main";
 
 type TResponseFile = {
     id: number
@@ -20,7 +19,6 @@ type TResponseFile = {
     size: number
     link: string
     token: string
-    tokenIsExpired: boolean
     tokenExpiresAt: Date
 } & Partial<TFileStat>
 
@@ -35,7 +33,7 @@ const getFileName = (file: Express.Multer.File): string => {
 
 @Controller('upload')
 export class UploadController {
-    constructor(private readonly appService: AppService, private readonly config: ConfigService) {}
+    constructor(private readonly appService: AppService) {}
 
     @Post()
     @UseInterceptors(
@@ -69,7 +67,6 @@ export class UploadController {
             throw new InternalServerErrorException('Not found upload dir for user session');
         }
 
-        const uploadedFilesTtl = parseInt(this.config.get('UPLOADED_FILES_LIFETIME_DAYS', DEFAULT_FILES_LIFETIME_DAYS+''));
         const response: { statusCode: number, files: TResponseFile[] } = {
             statusCode: 200,
             files: [],
@@ -88,7 +85,6 @@ export class UploadController {
                     size: file.size,
                     link: `/d/${fileEntity.token}`,
                     token: fileEntity.token,
-                    tokenIsExpired: new Date() > fileEntity.expiresAt,
                     tokenExpiresAt: fileEntity.expiresAt,
                     mtime: stat.mtime,
                 });
