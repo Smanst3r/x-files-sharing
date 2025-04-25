@@ -12,7 +12,7 @@ import {
     TableColumnDefinition, TableColumnId,
     TableHeader, TableHeaderCell,
     TableRow, useTableFeatures, useTableSort,
-    Text, Subtitle1, tokens, Tooltip, ProgressBar, Field, TableRowData,
+    Text, Subtitle1, tokens, Tooltip, ProgressBar, Field,
 } from "@fluentui/react-components";
 import { formatFileSize } from "@/lib/utils.ts";
 import { format, formatDistanceToNow } from "date-fns";
@@ -160,49 +160,16 @@ export const Grid: FC = () => {
         sortDirection: "ascending" | "descending";
         sortColumn: TableColumnId | undefined;
     }>({
-        sortDirection: "descending" as const,
+        sortDirection: "ascending" as const,
         sortColumn: "mtime",
     });
-
-    // Sort files so the newly added files should be on the top of table
-    const getSortedFiles = (files: TableRowData<TGridFile>[]): TableRowData<TGridFile>[] => {
-        return [...files].sort((aRow, bRow) => {
-            const a = aRow.item;
-            const b = bRow.item;
-            const isANewlyAdded = !!a.userAddedAt;
-            const isBNewlyAdded = !!b.userAddedAt;
-
-            if (isANewlyAdded && !isBNewlyAdded) {
-                return -1;
-            }
-            if (!isANewlyAdded && isBNewlyAdded) {
-                return 1;
-            }
-            if (isANewlyAdded && isBNewlyAdded) {
-                return new Date(b.userAddedAt as Date).getTime() - new Date(a.userAddedAt as Date).getTime();
-            }
-
-            const { sortColumn, sortDirection } = sortState;
-            if (!sortColumn) {
-                return 0;
-            }
-
-            const column = columns.find(c => c.columnId === sortColumn);
-            if (!column || !column.compare) {
-                return 0;
-            }
-
-            const compareResult = column.compare!(a, b);
-            return sortDirection === "ascending" ? compareResult : -compareResult;
-        });
-    };
 
     const {
         getRows,
         sort: {
             getSortDirection,
             toggleColumnSort,
-            // sort
+            sort
         },
     } = useTableFeatures(
         {
@@ -351,8 +318,7 @@ export const Grid: FC = () => {
         setValidationErrors([error]);
     }
 
-    // const rows = sort(getRows());
-    const rows = getSortedFiles(getRows());
+    const rows = sort(getRows());
 
     return <DnD onFilesAccepted={handleUploadButton}>
         <div className={classes.root} id="files-grid">
