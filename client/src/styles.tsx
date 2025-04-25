@@ -14,7 +14,10 @@ export const useCommonStyles = makeStyles({
         ':hover': {
             color: tokens.colorPaletteRedForeground1,
         }
-    }
+    },
+    spinner: {
+        animation: 'spin 1s linear infinite',
+    },
 });
 
 export default useCommonStyles;
