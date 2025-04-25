@@ -17,7 +17,7 @@ type TResponseFile = {
     id: number
     fileName: string
     size: number
-    link: string
+    downloadLink: string
     token: string
     tokenExpiresAt: Date
 } & Partial<TFileStat>
@@ -83,7 +83,7 @@ export class UploadController {
                     id: fileEntity.id,
                     fileName: file.filename,
                     size: file.size,
-                    link: `/d/${fileEntity.token}`,
+                    downloadLink: `/d/${fileEntity.token}`,
                     token: fileEntity.token,
                     tokenExpiresAt: fileEntity.expiresAt,
                     mtime: stat.mtime,
