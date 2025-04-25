@@ -32,6 +32,8 @@ async function bootstrap() {
     const config = app.get(ConfigService);
     const logger = new Logger('Bootstrap');
 
+    // Application will run behind a nginx reverse proxy
+    app.set('trust proxy', 'loopback');
     // https://docs.nestjs.com/security/helmet
     app.use(helmet());
 
