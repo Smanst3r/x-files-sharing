@@ -13,22 +13,7 @@ declare global {
         name: string,
         size: number,
         mtime: Date,
-        ctime: Date,
-        isFile: boolean,
-        isDirectory: boolean,
-        dateOfRemoval?: Date
     }
-    type TShareFile = {
-        id: number
-        token: string
-        tokenExpiresAt: Date
-        tokenIsExpired: boolean
-        downloadLink: string
-        dateOfRemoval?: Date,
-    }
-    type TUploadedFile = {
-        stat: TFileStat
-    } & TShareFile
 }
 
 export {};
