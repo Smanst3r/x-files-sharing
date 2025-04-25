@@ -91,7 +91,6 @@ export class UploadController {
                     tokenIsExpired: new Date() > fileEntity.expiresAt,
                     tokenExpiresAt: fileEntity.expiresAt,
                     mtime: stat.mtime,
-                    dateOfRemoval: new Date(stat.mtime.getTime() + uploadedFilesTtl * 24 * 60 * 60 * 1000),
                 });
             }
         }

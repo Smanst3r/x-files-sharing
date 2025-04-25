@@ -66,10 +66,6 @@ export class AppService {
                     name: filename,
                     size: stats.size,
                     mtime: stats.mtime,
-                    ctime: stats.ctime,
-                    isFile: stats.isFile(),
-                    isDirectory: stats.isDirectory(),
-                    dateOfRemoval: new Date(stats.mtime.getTime() + uploadedFilesTtl * 24 * 60 * 60 * 1000),
                 };
 
                 return fileStat;

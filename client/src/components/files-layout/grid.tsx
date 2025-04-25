@@ -34,10 +34,6 @@ type TFileStat = {
     name: string,
     size: number,
     mtime: string,
-    ctime?: Date,
-    isFile: boolean,
-    isDirectory: boolean,
-    dateOfRemoval?: string
 }
 
 type TUploadingFile = {
@@ -71,7 +67,6 @@ type TUploadResponse = {
         tokenIsExpired: boolean
         tokenExpiresAt: string
         mtime: string
-        dateOfRemoval: string
     }[]
 }
 
@@ -224,8 +219,6 @@ export const Grid: FC = () => {
                         name: file.name,
                         size: file.size,
                         mtime: new Date().toString(),
-                        isDirectory: false,
-                        isFile: true,
                     },
                     isUploading: true,
                     isUploadedSuccessfully: false,
@@ -277,7 +270,6 @@ export const Grid: FC = () => {
                                 stat: {
                                     ...f.stat,
                                     mtime: uploadedFile.mtime,
-                                    dateOfRemoval: uploadedFile.dateOfRemoval,
                                 }
                             };
                         }
