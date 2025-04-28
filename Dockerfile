@@ -32,13 +32,14 @@ RUN npm install --omit=dev
 
 # Copy server build output and other necessary runtime files from the build stage
 COPY --from=server_builder /build/server/dist ./dist
-COPY --from=server_builder /build/server/uploads ./uploads
-COPY --from=server_builder /build/server/sessions ./sessions
+
 # Copy other necessary files
-COPY --from=server_builder /build/server/app.db.sql ./app.db.sql
 COPY --from=server_builder /build/server/*.json ./
+
 # Copy built frontend files from the client build stage into the /public directory
 COPY --from=client_builder /build/server/public ./public
+
+VOLUME /app/server/uploads /app/server/sessions /app/server/db-data
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
