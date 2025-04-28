@@ -13,7 +13,7 @@ export class AuthGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean {
         const req = context.switchToHttp().getRequest<Request>();
         const res = context.switchToHttp().getResponse<Response>();
-        const ip = req.ip ?? '';
+        const ip = req.clientIp ?? '';
 
         if (req.session.user?.authenticated) {
             return true;
@@ -51,8 +51,6 @@ export class AuthGuard implements CanActivate {
                 };
             }
             return true;
-        } else {
-            this.logger.debug(`IP :: ${ip} is not whitelisted`);
         }
 
         res.status(401).send('Unauthorized');

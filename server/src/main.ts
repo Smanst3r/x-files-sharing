@@ -11,6 +11,7 @@ import { AuthGuard } from './auth/auth.guard';
 import { Logger, RequestMethod } from '@nestjs/common';
 import helmet from 'helmet';
 import * as express from 'express';
+import * as requestIp from 'request-ip';
 
 // Setup application root paths
 const rootPath = resolve(join(__dirname, '..'));
@@ -39,6 +40,7 @@ async function bootstrap() {
 
     // https://docs.nestjs.com/security/helmet
     app.use(helmet());
+    app.use(requestIp.mw());
 
     if (!config.get('INIT_ALLOWED_IP')) {
         logger.error(
