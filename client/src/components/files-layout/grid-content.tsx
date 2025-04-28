@@ -120,8 +120,7 @@ export const GridContent: FC<TProps> = ({ files, isLoadingFiles, onFileRemovedSu
     if (!isLoadingFiles && !rows.length) {
         return <MessageBar>
             <MessageBarBody>
-                <MessageBarTitle>Sorry</MessageBarTitle>
-                You don't have any files recently uploaded
+                You don't have any recently uploaded files
             </MessageBarBody>
         </MessageBar>
     }
@@ -144,7 +143,8 @@ export const GridContent: FC<TProps> = ({ files, isLoadingFiles, onFileRemovedSu
             </MessageBar>
             : <></>
         }
-        <Table style={{width: "100%", tableLayout: 'auto'}} sortable>
+        <h2 style={{marginTop: '2.5rem', marginBottom: '.5rem'}}>Recent files</h2>
+        <Table style={{tableLayout: 'auto'}} sortable>
             <TableHeader>
                 <TableRow>
                     {columns.map((col) => {

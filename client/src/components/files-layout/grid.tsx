@@ -203,10 +203,10 @@ export const Grid: FC = () => {
     return <DnD onFilesAccepted={handleUploadButton}>
         <div className={classes.root} id="files-grid">
             <h2 className={classes.gridHeader}>
-                <div>My files <UploadButton handleUpload={(filesList) => handleUploadButton(Array.from(filesList))}/>
+                <div><UploadButton handleUpload={(filesList) => handleUploadButton(Array.from(filesList))}/>
                 </div>
                 <div>
-                    <Subtitle1 className={classes.gridHeaderHint}>Or drag and drop files anywhere on grid</Subtitle1>
+                    <Subtitle1 className={classes.gridHeaderHint}>or drag and drop files anywhere on grid</Subtitle1>
                 </div>
             </h2>
 

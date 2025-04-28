@@ -1,25 +1,27 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { NestExpressApplication } from "@nestjs/platform-express";
+import { NestExpressApplication } from '@nestjs/platform-express';
 import * as cookieParser from 'cookie-parser';
 import * as fileStoreFactory from 'session-file-store';
 const session = require('express-session');
-import { ConfigService } from "@nestjs/config";
-import { join, resolve } from "path";
-import * as fs from "fs";
-import { AuthGuard } from "./auth/auth.guard";
-import { Logger, RequestMethod } from "@nestjs/common";
-import helmet from "helmet";
+import { ConfigService } from '@nestjs/config';
+import { join, resolve } from 'path';
+import * as fs from 'fs';
+import { AuthGuard } from './auth/auth.guard';
+import { Logger, RequestMethod } from '@nestjs/common';
+import helmet from 'helmet';
 import * as express from 'express';
 
 // Setup application root paths
 const rootPath = resolve(join(__dirname, '..'));
 export const paths = {
     root: rootPath,
-    allowedIpsFile: resolve(join(rootPath, 'db-data', 'allowed_ip_addresses.txt')),
+    allowedIpsFile: resolve(
+        join(rootPath, 'db-data', 'allowed_ip_addresses.txt'),
+    ),
     tokensFile: resolve(rootPath, 'db-data', 'tokens.txt'),
     uploads: resolve(rootPath, 'uploads'),
-}
+};
 
 export const AUTH_TOKEN_MAX_INVALID_ATTEMPTS = 5;
 export const AUTH_TOKEN_MAX_INVALID_ATTEMPTS_HOURS = 1; // per hour
@@ -38,13 +40,19 @@ async function bootstrap() {
     app.use(helmet());
 
     if (!config.get('INIT_ALLOWED_IP')) {
-        logger.error('Please set required INIT_ALLOWED_IP environment variable');
+        logger.error(
+            'Please set required INIT_ALLOWED_IP environment variable',
+        );
     }
     if (!config.get('INIT_AUTH_TOKEN')) {
-        logger.error('Please set required INIT_AUTH_TOKEN environment variable');
+        logger.error(
+            'Please set required INIT_AUTH_TOKEN environment variable',
+        );
     }
     if (!config.get('UPLOADS_STORAGE_MAX_CAPACITY')) {
-        logger.error('Please set required UPLOADS_STORAGE_MAX_CAPACITY environment variable.');
+        logger.error(
+            'Please set required UPLOADS_STORAGE_MAX_CAPACITY environment variable.',
+        );
     }
 
     app.use(express.json({ limit: '1mb' })); // JSON post request body limit
@@ -61,20 +69,21 @@ async function bootstrap() {
 
     app.useGlobalGuards(new AuthGuard(config));
     app.setGlobalPrefix('api', {
-        exclude: [
-            { path: 'd/:token', method: RequestMethod.GET },
-        ],
+        exclude: [{ path: 'd/:token', method: RequestMethod.GET }],
     });
     app.enableCors({
         origin: 'http://localhost:5173', // allow local frontend access
         credentials: true,
     });
 
-    const sessionLifetime = parseInt(config.get('SESSION_LIFETIME_DAYS', '7'), 10) * 24 * 60 * 60;
-    let sessionSecret = config.get('SESSION_SECRET');
+    const sessionLifetime =
+        parseInt(config.get('SESSION_LIFETIME_DAYS', '7'), 10) * 24 * 60 * 60;
+    let sessionSecret: string | undefined = config.get('SESSION_SECRET');
     if (!sessionSecret) {
         sessionSecret = 'dummy_session_secret!';
-        logger.warn('Please set the SESSION_SECRET environment variable to better protect your session data');
+        logger.warn(
+            'Please set the SESSION_SECRET environment variable to better protect your session data',
+        );
     }
 
     const sessionDir = resolve(join(rootPath, 'sessions'));
@@ -85,7 +94,7 @@ async function bootstrap() {
         session({
             store: new FileStore({
                 path: sessionDir,
-                ttl: sessionLifetime
+                ttl: sessionLifetime,
             }),
             secret: sessionSecret,
             resave: false,
