@@ -33,7 +33,7 @@ export class AppController {
             return res.status(401).send('Unauthorized');
         }
         this.appService.saveWebsiteSettings(data.allowed_ip_addresses, data.access_tokens);
-        return res.status(200).send();
+        return res.status(204).send();
     }
 
     @Get('user-files')
