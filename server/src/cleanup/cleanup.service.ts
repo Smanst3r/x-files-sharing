@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
@@ -9,15 +9,20 @@ import { join } from "path";
 import { DEFAULT_FILES_LIFETIME_DAYS, paths } from "../main";
 
 @Injectable()
-export class CleanupService {
-    private readonly fileLifetimeMs: number;
+export class CleanupService implements OnModuleInit {
+    private fileLifetimeMs: number;
 
     constructor(
         private readonly configService: ConfigService,
         @InjectRepository(UploadedFileEntity)
         private readonly filesRepo: Repository<UploadedFileEntity>,
-    ) {
-        const days = parseInt(this.configService.get('UPLOADED_FILES_LIFETIME_DAYS', DEFAULT_FILES_LIFETIME_DAYS+''), 10);
+    ) {}
+
+    onModuleInit() {
+        const days = parseInt(
+            this.configService.get('UPLOADED_FILES_LIFETIME_DAYS', DEFAULT_FILES_LIFETIME_DAYS + ''),
+            10
+        );
         this.fileLifetimeMs = days * 24 * 60 * 60 * 1000;
     }
 

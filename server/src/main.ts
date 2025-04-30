@@ -79,8 +79,7 @@ async function bootstrap() {
         credentials: true,
     });
 
-    const sessionLifetime =
-        parseInt(config.get('SESSION_LIFETIME_DAYS', '7'), 10) * 24 * 60 * 60;
+    const sessionLifetime = parseInt(config.get('SESSION_LIFETIME_DAYS', '7'), 10) * 24 * 60 * 60;
     let sessionSecret: string | undefined = config.get('SESSION_SECRET');
     if (!sessionSecret) {
         sessionSecret = 'dummy_session_secret!';

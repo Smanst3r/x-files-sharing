@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UploadedFileEntity } from './uploaded-file.entity';
 import { nanoid } from "nanoid";
 import { ConfigService } from "@nestjs/config";
+import { DEFAULT_FILES_LIFETIME_DAYS } from "../main";
 
 @Injectable()
 export class UploadedFileRepository {
@@ -15,7 +16,7 @@ export class UploadedFileRepository {
 
     async saveFileInDb(fileName: string, sessionId: string, uploadDir: string): Promise<UploadedFileEntity> {
         const token = nanoid(12);
-        const tokenLifetimeDays = parseInt(this.config.get('DOWNLOAD_TOKEN_LIFETIME_DAYS', '1'));
+        const tokenLifetimeDays = parseInt(this.config.get('UPLOADED_FILES_LIFETIME_DAYS', DEFAULT_FILES_LIFETIME_DAYS+''));
 
         const expiresAt = new Date(Date.now() + tokenLifetimeDays * 24 * 60 * 60 * 1000);
         const existingFile = await this.repo.findOne({
