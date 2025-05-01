@@ -38,8 +38,7 @@ export class AuthController {
             return res.status(500).send('The application can not function as the authentication is not properly configured.');
         }
 
-        const tokens: string[] = [...savedTokens, initAuthToken];
-
+        const tokens: string[] = !savedTokens.length ? [initAuthToken] : savedTokens;
         if (tokens.includes(token)) {
             req.session.user = {
                 authenticated: true,
