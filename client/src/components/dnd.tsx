@@ -51,7 +51,7 @@ const DnD: FC<PropsWithChildren<TProps>> = ({ onFilesAccepted, disabled, childre
     }
 
     return (
-        <div {...getRootProps()} style={{ position: 'relative' }}>
+        <div {...getRootProps()} style={{ position: 'relative', minHeight: 'calc(100vh - 72px)' }}>
             <input {...getInputProps()} />
             {isDragging && (
                 <div className={classes.dropzoneOverlay}>
