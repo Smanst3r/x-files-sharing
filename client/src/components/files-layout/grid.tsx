@@ -206,7 +206,7 @@ export const Grid: FC = () => {
                 <div><UploadButton handleUpload={(filesList) => handleUploadButton(Array.from(filesList))}/>
                 </div>
                 <div>
-                    <Subtitle1 className={classes.gridHeaderHint}>or drag and drop files anywhere on grid</Subtitle1>
+                    <Subtitle1 className={classes.gridHeaderHint}>or drag and drop files anywhere the page</Subtitle1>
                 </div>
             </h2>
 
